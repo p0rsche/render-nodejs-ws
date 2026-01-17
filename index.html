@@ -350,11 +350,6 @@
                     ws = null;
                 };
 
-                setTimeout(() => {
-                  document.dispatchEvent(new Event('visibilitychange'));
-                  console.log('dispatching visibilitychange event')
-                }, 2000);
-
             } catch (error) {
                 log('error', 'EXCEPTION', `Failed to create WebSocket: ${error.message}`);
                 console.error('Connection error:', error);
