@@ -8,17 +8,39 @@ const port = process.env.PORT || 10000
 
 const wss = new WebSocket.Server({ server, path: '/ws' })
 
-app.get('/', (req, res) => {
-  res.send('Hello over HTTP!')
+function heartbeat() {
+  this.isAlive = true
+}
+
+app.get('/', (_, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'))
 })
 
 wss.on('connection', (ws) => {
-  console.log('WebSocket client connected')
+  ws.isAlive = true
+  ws.on('error', console.error)
+  ws.on('pong', heartbeat)
 
   ws.on('message', (message) => {
     console.log('Received:', message.toString())
-    ws.send(`Hello over WebSocket!`)
+    ws.send('Hello over WebSocket!')
   })
+})
+
+// Ping all connected clients every 30 seconds
+const interval = setInterval(function ping() {
+  wss.clients.forEach(function each(ws) {
+    // Close connections that failed to "pong" the previous ping
+    if (ws.isAlive === false) return ws.terminate()
+
+    ws.isAlive = false
+    ws.ping()
+  })
+}, 30000)
+
+// Standard shutdown logic
+wss.on('close', function close() {
+  clearInterval(interval)
 })
 
 server.listen(port, () => {
